@@ -46,3 +46,6 @@ class RegisterSerializer(serializers.Serializer):
         # إنشاء المستخدم باستخدام الدالة الموجودة في `User`
         User.create_user(user_data)
         return user_data
+    
+
+    

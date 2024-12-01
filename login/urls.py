@@ -7,6 +7,7 @@ urlpatterns = [
 ]
 
 
+
 # {
 #     "username": "new_user",
 #     "email": "newuser@example.com",
