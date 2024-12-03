@@ -1,6 +1,6 @@
 import bcrypt
 from rest_framework import serializers
-from login.models import User
+from account.models import User
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()

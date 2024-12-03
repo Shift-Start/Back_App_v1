@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from bson import ObjectId
-from login.models import Habit  # نستورد الكلاس الخاص بالموديل
+from habit.models import Habit  # نستورد الكلاس الخاص بالموديل
 from habit.serializers import HabitSerializer  # نستورد السيريالايزر
 
 class HabitListCreateView(APIView):

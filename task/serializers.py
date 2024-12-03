@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from login.models import Task
+from task.models import Task
 class TaskSerializer(serializers.Serializer):
     task_id = serializers.CharField(read_only=True)  # التأكد من أنه نص
     user_id = serializers.CharField()  # التأكد من أنه نص

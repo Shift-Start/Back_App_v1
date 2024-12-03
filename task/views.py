@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from login.models import Task  # استيراد موديل Task
+from task.models import Task  # استيراد موديل Task
 from task.serializers import TaskSerializer  # استيراد Serializers الخاص بالمهمة
 from bson import json_util
 from rest_framework.permissions import IsAuthenticated
