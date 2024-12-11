@@ -53,6 +53,8 @@ class RewardSerializer(serializers.Serializer):
 
 class ReportSerializer(serializers.Serializer):
     id = serializers.CharField(source='_id', read_only=True)
-    user_id = serializers.CharField()
-    report_content = serializers.CharField()
-    created_at = serializers.DateTimeField()
+    report_content = serializers.ListField(
+        child=serializers.CharField()  # المصفوفة تحتوي على اسم التقرير ووصفه
+    )
+    created_at = serializers.DateTimeField(read_only=True)
+

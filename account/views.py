@@ -157,17 +157,47 @@ class RewardView(APIView):
             return Response(convert_object_ids(reward), status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-### التقارير ###
+
 class ReportView(APIView):
     def get(self, request, user_id):
-        """عرض التقارير الخاصة بالمستخدم"""
-        reports = Reports.get_reports_by_user(ObjectId(user_id))
+        """عرض جميع التقارير الخاصة بالمستخدم"""
+        reports = Reports.get_reports_by_user(ObjectId(user_id))  # جلب التقارير من قاعدة البيانات
+        if not reports:
+            return Response({"message": "No reports found for this user."}, status=status.HTTP_404_NOT_FOUND)
+        
         return Response(convert_object_ids(reports), status=status.HTTP_200_OK)
 
-    def post(self, request):
+    def post(self, request, user_id):
         """إضافة تقرير جديد"""
-        serializer = ReportSerializer(data=request.data)
+        data = request.data
+        data['user_id'] = user_id  # إضافة user_id من المسار (URL)
+        
+        serializer = ReportSerializer(data=data)
         if serializer.is_valid():
-            report = Reports.create_report(**serializer.validated_data)
+            report_data = serializer.validated_data
+            report = Reports.create_report(user_id=user_id, **report_data)
             return Response(convert_object_ids(report), status=status.HTTP_201_CREATED)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# class ReportView(APIView):
+#     def get(self, request, user_id):
+#         """عرض التقارير الخاصة بالمستخدم"""
+#         reports = Reports.get_reports_by_user(ObjectId(user_id))
+#         return Response(convert_object_ids(reports), status=status.HTTP_200_OK)
+
+#     def post(self, request, user_id):
+#         """إضافة تقرير جديد"""
+#         # استخراج البيانات من الجسم
+#         data = request.data
+#         data['user_id'] = user_id  # إضافة user_id من المسار (URL)
+        
+#         serializer = ReportSerializer(data=data)
+#         if serializer.is_valid():
+#             # إرسال البيانات إلى `Reports.create_report`
+#             report_data = serializer.validated_data
+#             report = Reports.create_report(user_id=user_id, **report_data)
+#             return Response(convert_object_ids(report), status=status.HTTP_201_CREATED)
+        
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

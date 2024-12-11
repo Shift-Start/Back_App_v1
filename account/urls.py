@@ -12,6 +12,7 @@ urlpatterns = [
     path('notifications/<str:user_id>/', NotificationsView.as_view(), name='notifications'),
     path('rewards/<str:user_id>/', RewardView.as_view(), name='rewards'),
     path('reports/<str:user_id>/', ReportView.as_view(), name='reports'),
+
 ]
 
 
@@ -27,4 +28,10 @@ urlpatterns = [
 # {
 #   "user_id": "1234567890abcdef12345678",
 #   "content": "هذه هي التوصية الجديدة التي أريد إضافتها."
+# }
+
+
+
+# {
+#   "report_content": ["تقرير الأداء الشهري", "التقرير حول أداء المستخدم في الشهر الماضي"]
 # }

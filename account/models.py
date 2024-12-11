@@ -159,18 +159,20 @@ class Reward:
 
 # جدول التقارير
 class Reports:
-    collection = db['reports']
+    collection = db['reports']  # تحديد قاعدة البيانات المناسبة
 
     @staticmethod
     def create_report(user_id, report_content):
+        """إنشاء تقرير جديد"""
         report_data = {
-            "user_id": user_id,
-            "report_content": report_content,
-            "created_at": datetime.utcnow()
+            "user_id": user_id,  # معرف المستخدم
+            "report_content": report_content,  # محتوى التقرير
+            "created_at": datetime.utcnow()  # تاريخ الإنشاء (بالتوقيت العالمي)
         }
-        Reports.collection.insert_one(report_data)
-        return report_data
+        Reports.collection.insert_one(report_data)  # إضافة التقرير إلى قاعدة البيانات
+        return report_data  # إرجاع التقرير الجديد
 
     @staticmethod
     def get_reports_by_user(user_id):
+        """الحصول على التقارير الخاصة بمستخدم معين"""
         return list(Reports.collection.find({"user_id": user_id}))
