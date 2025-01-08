@@ -1,4 +1,5 @@
 from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from login.models import User
@@ -33,6 +34,7 @@ from login.serializers import LoginSerializer,RegisterSerializer
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginAPIView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
@@ -82,6 +84,7 @@ class LoginAPIView(APIView):
 #             )
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class RegisterAPIView(APIView):
+    permission_classes= [AllowAny]
     def post(self, request):
         # طباعة البيانات المستلمة من العميل
         print(f"Request Data: {request.data}")
