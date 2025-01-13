@@ -14,16 +14,22 @@ from team.views import (
 )
 
 urlpatterns = [
+    #             إنشاء وعرض وتعديل وحذف الفريق
     path('teams/', TeamListCreateView.as_view(), name='team-list-create'),
-    path('team-members/', TeamMemberListCreateView.as_view(), name='team-member-list-create'),
     path('teams/<str:team_id>/', TeamUpdateView.as_view(), name='team-update'),
     path('teams/<str:team_id>/delete/', TeamDeleteView.as_view(), name='team-delete'),
+    #             إنشاء وعرض وتعديل وحذف أعضاء الفريق
+    path('team-members/', TeamMemberListCreateView.as_view(), name='team-member-list-create'),
+    path('team-members/<str:member_id>/delete/', TeamMemberDeleteView.as_view(), name='team-member-delete'),
     path('team-members/<str:member_id>/', TeamMemberUpdateView.as_view(), name='team-member-update'),
+    #             إنشاء وعرض وتعديل وحذف تاسكات الفريق
     path('teams/<str:team_id>/tasks/', TeamTaskListCreateView.as_view(), name='team-task-list-create'),
-    path('team-members/<str:member_id>/tasks/', MemberTaskListView.as_view(), name='member-task-list'),
     path('teams/<str:team_id>/tasks/<str:task_id>/', TeamTaskUpdateView.as_view(), name='team-task-update'),
     path('teams/<str:team_id>/tasks/<str:task_id>/delete/', TeamTaskDeleteView.as_view(), name='team-task-delete'),
+    #             عرض جميع تاسكات الفريق
     path('teams/<str:team_id>/tasks/', TeamTasksByTeamView.as_view(), name='team-tasks-by-team'),
+    #             عرض جميع تاسكات عضو معين
+    path('team-members/<str:member_id>/tasks/', MemberTaskListView.as_view(), name='member-task-list'),
 
 ]
 
