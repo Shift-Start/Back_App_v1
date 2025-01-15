@@ -1,12 +1,14 @@
 from datetime import datetime
+from string import Template
+from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from bson import ObjectId
 from rest_framework.permissions import AllowAny
-from .serializers import TaskSerializer
-from .models import Task
-from pymongo.errors import PyMongoError
+from .serializers import TaskSerializer, TemplateSerializer
+from .models import Task, TemplateModel
+from django.views.decorators.csrf import csrf_exempt
 
 def convert_object_id_to_string(task):
     task['_id'] = str(task['_id'])
@@ -91,3 +93,47 @@ class GetAllTasksView(APIView):
             return Response({"tasks": tasks}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+          #عرض القوالب وإضافتها
+class TemplateView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        templates = TemplateModel.get_all_templates()
+        serializer = TemplateSerializer(templates, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    def post(self, request):
+        serializer = TemplateSerializer(data=request.data)
+        if serializer.is_valid():
+            template = TemplateModel.insert_template(
+                name=serializer.validated_data['name'],
+                description=serializer.validated_data['description']
+            )
+            return Response(template, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteTemplateByNameView(APIView):
+    @csrf_exempt  # تعطيل التحقق من CSRF لهذا الـ view
+    def delete(self, request, template_name):
+        try:
+            result = TemplateModel.collection.delete_one({"name": template_name})
+            if result.deleted_count > 0:
+                return JsonResponse({"message": f"Template '{template_name}' deleted successfully."}, status=200)
+            else:
+                return JsonResponse({"error": f"No template found with name '{template_name}'."}, status=404)
+        except Exception as e:
+            return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
+
+class DeleteTemplateByIdView(APIView):
+    @csrf_exempt  # تعطيل التحقق من CSRF لهذا الـ view
+    def delete(self, request, template_id):
+        try:
+            if not ObjectId.is_valid(template_id):
+                return JsonResponse({"error": "Invalid Template ID"}, status=400)
+            result = TemplateModel.collection.delete_one({"_id": ObjectId(template_id)})
+            if result.deleted_count > 0:
+                return JsonResponse({"message": f"Template with ID '{template_id}' deleted successfully."}, status=200)
+            else:
+                return JsonResponse({"error": f"No template found with ID '{template_id}'."}, status=404)
+        except Exception as e:
+            return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)

@@ -102,3 +102,50 @@ class Task:
             return tasks_list
         except Exception as e:
             raise ValueError(f"Error while retrieving tasks: {e}")
+
+
+# اسماء القوالب
+class TemplateModel:
+    collection = db['Template_name']
+#إضافة قالب
+    @staticmethod
+    def insert_template(name, description):
+        data = {
+            "name": name,
+            "description": description,
+            "CreatedAt": datetime.utcnow()
+        }
+        result = TemplateModel.collection.insert_one(data)
+        data['_id'] = str(result.inserted_id)
+        return data
+
+    @staticmethod
+    def get_all_templates():
+        templates = list(TemplateModel.collection.find())
+        for template in templates:
+            template['_id'] = str(template['_id'])
+        return templates
+
+    @staticmethod
+    def delete_template_by_name(template_name):
+        try:
+            result = TemplateModel.collection.delete_one({"name": template_name})
+            if result.deleted_count > 0:
+                return {"message": f"Template '{template_name}' deleted successfully."}, 200
+            else:
+                return {"error": f"No template found with name '{template_name}'."}, 404
+        except Exception as e:
+            return {"error": f"An error occurred: {str(e)}"}, 500
+
+    @staticmethod
+    def delete_template_by_id(template_id):
+        try:
+            if not ObjectId.is_valid(template_id):
+                return {"error": "Invalid Template ID"}, 400
+            result = TemplateModel.collection.delete_one({"_id": ObjectId(template_id)})
+            if result.deleted_count > 0:
+                return {"message": f"Template with ID '{template_id}' deleted successfully."}, 200
+            else:
+                return {"error": f"No template found with ID '{template_id}'."}, 404
+        except Exception as e:
+            return {"error": f"An error occurred: {str(e)}"}, 500
