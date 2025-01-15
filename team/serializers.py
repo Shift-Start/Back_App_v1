@@ -1,8 +1,6 @@
 from bson import ObjectId
 from rest_framework import serializers
-
 from team.models import TeamMember
-
 class TeamSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100)
     admin_id = serializers.CharField(max_length=50)

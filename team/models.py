@@ -1,5 +1,4 @@
 from django.db import models
-# Create your models here.
 from bson import ObjectId
 from pymongo import MongoClient
 from datetime import datetime
