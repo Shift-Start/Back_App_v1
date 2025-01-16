@@ -18,3 +18,26 @@ class TemplateSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     description = serializers.CharField(max_length=1024)
     CreatedAt = serializers.DateTimeField(read_only=True)
+
+class TemplateTaskSerializer(serializers.Serializer):
+    Templates = serializers.CharField(max_length=255)
+    TaskID = serializers.CharField(max_length=255, required=True)
+    Description = serializers.CharField(max_length=1000, required=False, allow_blank=True)
+    TemplateID = serializers.CharField(max_length=255)
+    StartDate = serializers.DateTimeField()
+    EndDate = serializers.DateTimeField()
+    Date = serializers.DateField()
+    Point = serializers.FloatField()
+    Status = serializers.CharField(max_length=50)
+    Repetition = serializers.CharField(max_length=50)
+
+class AddTemplateTaskSerializer(serializers.Serializer):
+    TemplateID = serializers.CharField(max_length=255, required=True)
+    TaskID = serializers.CharField(max_length=255, required=True)
+    Description = serializers.CharField(max_length=1000, required=False, allow_blank=True)
+    StartDate = serializers.DateTimeField(required=True)
+    EndDate = serializers.DateTimeField(required=True)
+    Date = serializers.DateField(required=True)
+    Point = serializers.FloatField(required=True)
+    Status = serializers.CharField(max_length=50, required=True)
+    Repetition = serializers.CharField(max_length=50, required=True)

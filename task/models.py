@@ -149,3 +149,73 @@ class TemplateModel:
                 return {"error": f"No template found with ID '{template_id}'."}, 404
         except Exception as e:
             return {"error": f"An error occurred: {str(e)}"}, 500
+
+class TemplateTask:
+    collection = db['template_task']  # مجموعة المهام الخاصة بالقوالب
+
+    @staticmethod
+    def add_task_to_template(data):
+        """
+        إضافة مهمة جديدة إلى جدول template_task
+        """
+        try:
+            # التحقق من الحقول المطلوبة
+            required_fields = ["TemplateID", "TaskID", "Description", "StartDate", "EndDate", "Date", "Point", "Status", "Repetition"]
+            for field in required_fields:
+                if field not in data:
+                    raise ValueError(f"Missing required field: {field}")
+
+            # إضافة الوقت الحالي كوقت الإنشاء والتحديث
+            current_time = datetime.utcnow()
+            data['created_at'] = current_time
+            data['updated_at'] = current_time
+
+            # إدخال البيانات إلى جدول template_task
+            result = TemplateTask.collection.insert_one(data)
+            data['_id'] = str(result.inserted_id)
+            return data
+        except PyMongoError as e:
+            raise RuntimeError(f"Failed to add task to template: {e}")
+        except ValueError as e:
+            raise e
+        
+    @staticmethod
+    def assign_tasks_to_user(template_id, user_id):
+        """
+        نقل المهام من template_task إلى tasks للمستخدم المحدد.
+        """
+        tasks_collection = db['tasks']  # مجموعة المهام العادية
+
+        try:
+            # جلب المهام المرتبطة بـ TemplateID
+            template_tasks = TemplateTask.collection.find({"TemplateID": template_id})
+            
+            if template_tasks.count() == 0:
+                raise ValueError(f"No tasks found for TemplateID: {template_id}")
+            
+            # نسخ المهام إلى tasks
+            new_tasks = []
+            for task in template_tasks:
+                task_copy = {
+                    "TaskID": task["TaskID"],
+                    "TemplateID": task["TemplateID"],
+                    "Description": task.get("Description", ""),
+                    "StartDate": task["StartDate"],
+                    "EndDate": task["EndDate"],
+                    "Date": task.get("Date"),
+                    "Point": task.get("Point", 0),
+                    "Status": task["Status"],
+                    "Repetition": task["Repetition"],
+                    "UserID": user_id,  # إضافة معرف المستخدم
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow(),
+                }
+                new_tasks.append(task_copy)
+
+            # إدخال المهام الجديدة في tasks
+            result = tasks_collection.insert_many(new_tasks)
+            return {"inserted_count": len(result.inserted_ids)}
+        except PyMongoError as e:
+            raise RuntimeError(f"Failed to assign tasks: {e}")
+        except ValueError as e:
+            raise e

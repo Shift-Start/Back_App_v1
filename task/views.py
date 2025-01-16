@@ -6,8 +6,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from bson import ObjectId
 from rest_framework.permissions import AllowAny
-from .serializers import TaskSerializer, TemplateSerializer
-from .models import Task, TemplateModel
+from .serializers import AddTemplateTaskSerializer, TaskSerializer, TemplateSerializer
+from .models import Task, TemplateModel, TemplateTask
 from django.views.decorators.csrf import csrf_exempt
 
 def convert_object_id_to_string(task):
@@ -137,3 +137,57 @@ class DeleteTemplateByIdView(APIView):
                 return JsonResponse({"error": f"No template found with ID '{template_id}'."}, status=404)
         except Exception as e:
             return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
+        
+class AssignTemplateTasksView(APIView):
+    permission_classes = [AllowAny]
+    # View for assigning tasks from template_task to tasks for a specific user.
+    def post(self, request, template_id):
+        try:
+            # استخراج معرف المستخدم من البيانات
+            user_id = request.data.get("user_id")
+            if not user_id:
+                return Response({"error": "User ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+            # استدعاء الدالة لنقل المهام
+            result = TemplateTask.assign_tasks_to_user(template_id, user_id)
+
+            return Response({"message": "Tasks assigned successfully", "details": result}, status=status.HTTP_201_CREATED)
+        except ValueError as ve:
+            return Response({"error": str(ve)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class AddTemplateTaskView(APIView):
+    permission_classes = [AllowAny]
+    # View لإضافة مهام جديدة إلى جدول template_task
+    def post(self, request):
+        # التحقق مما إذا كان المستخدم مسؤولاً بناءً على خاصية is_admin
+        user = request.user
+        if not user.is_authenticated:
+           user.is_admin = True  # تعديل يدوي أثناء التجربة
+    
+    # تحقق من الصلاحيات
+        if not getattr(user, 'is_admin', False):
+           return Response({"error": "Permission denied. Admins only."}, status=status.HTTP_403_FORBIDDEN)
+        # user = request.user  # المستخدم الحالي
+        # if not user.is_authenticated or not getattr(user, 'is_admin', False):
+        #     return Response({"error": "Permission denied. Admins only."}, status=status.HTTP_403_FORBIDDEN)
+
+        # استلام البيانات والتحقق من صحتها
+        serializer = AddTemplateTaskSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                # تمرير البيانات للتحقق
+                task_data = serializer.validated_data
+                result = TemplateTask.add_task_to_template(task_data)
+
+                return Response(
+                    {"message": "Task added to template successfully", "task": result},
+                    status=status.HTTP_201_CREATED
+                )
+            except ValueError as ve:
+                return Response({"error": str(ve)}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({"error": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # في حالة كانت البيانات غير صحيحة
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

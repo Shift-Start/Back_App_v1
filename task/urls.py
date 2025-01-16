@@ -8,7 +8,9 @@ from task.views import (
     GetAllTasksView,
     TemplateView,
     DeleteTemplateByNameView,
-    DeleteTemplateByIdView
+    DeleteTemplateByIdView,
+    AssignTemplateTasksView,
+    AddTemplateTaskView
 
 )
 
@@ -31,6 +33,10 @@ urlpatterns = [
     path('delete/template/name/<str:template_name>/', DeleteTemplateByNameView.as_view(), name='delete_template_by_name'),
     #حذف القالب عن طريق id القالب
     path('delete/template/id/<str:template_id>/', DeleteTemplateByIdView.as_view(), name='delete_template_by_id'),
+    path('template-tasks/add/', AddTemplateTaskView.as_view(), name='add-template-task'),
+
+    path('assign-template-tasks/<str:template_id>/', AssignTemplateTasksView.as_view(), name='assign_template_tasks'),
+
 ]
 
 
@@ -40,7 +46,7 @@ urlpatterns = [
 #   "UserID": "user123",
 #   "Title": "Complete Homework",
 #   "Description": "Finish math homework before evening",
-#   "Date": "2025-01-15", 
+#   "Date": "2025-01-15",
 #   "StartDate": "2025-01-15T09:00:00",
 #   "EndDate": "2025-01-15T12:00:00",
 #   "repetition": "None",
