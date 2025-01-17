@@ -10,7 +10,9 @@ from task.views import (
     DeleteTemplateByNameView,
     DeleteTemplateByIdView,
     AssignTemplateTasksView,
-    AddTemplateTaskView
+    AddTemplateTaskView,
+    TransferTemplateTasksView,
+    DeleteTemplateTaskView
 
 )
 
@@ -33,13 +35,15 @@ urlpatterns = [
     path('delete/template/name/<str:template_name>/', DeleteTemplateByNameView.as_view(), name='delete_template_by_name'),
     #حذف القالب عن طريق id القالب
     path('delete/template/id/<str:template_id>/', DeleteTemplateByIdView.as_view(), name='delete_template_by_id'),
+    #إضافة تاسك خاص بالقالب
     path('template-tasks/add/', AddTemplateTaskView.as_view(), name='add-template-task'),
-
+    #حذف تاسك حاص بالقالب عن طريق id القالب , id المهمة
+    path('template-tasks/delete/', DeleteTemplateTaskView.as_view(), name='delete_template_task'),
+    #
     path('assign-template-tasks/<str:template_id>/', AssignTemplateTasksView.as_view(), name='assign_template_tasks'),
 
+    path('template-tasks/transfer/', TransferTemplateTasksView.as_view(), name='transfer_template_tasks'),
 ]
-
-
 
 #  إضافة مهمة جديدة           http://127.0.0.1:8000/api/tasks/tasks/
 # {
@@ -65,3 +69,24 @@ urlpatterns = [
 # http://127.0.0.1:8000/api/tasks/templates/ إضافة قالب وعرض القوالب الموجودة
 # http://127.0.0.1:8000/api/tasks/delete/template/name/Normal Day/ حذف قالب باستخدام الاسم
 # http://127.0.0.1:8000/api/tasks/delete/template/id/6783098111977c36a859d7d3/ حذف القالب باستخدام id القالب
+
+
+#http://127.0.0.1:8000/api/tasks/template-tasks/add/ إضافة مهمة الى تاسك معين مع الانتباه الى ان المستخدم يجب ان يكون ادمن 
+# {
+#     "TemplateID": "6788097711977c36a859d7d2",
+#     "TaskID": "task456",
+#     "Description": "Sample task description",
+#     "StartDate": "2025-01-17T08:00:00Z",
+#     "EndDate": "2025-01-17T10:00:00Z",
+#     "Date": "2025-01-17",
+#     "Point": 10.5,
+#     "Status": "Pending",
+#     "Repetition": "Daily"
+# }
+
+#http://127.0.0.1:8000/api/tasks/template-tasks/delete/ حذف تاسك خاص بالقالب بحيث نعطي الbodey معلومات id القالب و _id المهمة
+#مثال
+# {
+#   "TemplateID": "6788097711977c36a859d7d2",
+#   "TaskID": "678a8faee4978149c8a26f8b"
+# }

@@ -103,6 +103,39 @@ class Task:
         except Exception as e:
             raise ValueError(f"Error while retrieving tasks: {e}")
 
+    @staticmethod
+    def transfer_template_tasks_to_user(template_id, user_id):
+        # ينقل المهام الخاصة بالقالب المحدد إلى جدول المهام بناءً على TemplateID.
+        # جلب المهام الخاصة بالقالب بناءً على TemplateID
+        template_tasks = TemplateTask.collection.find({"TemplateID": ObjectId(template_id)})
+
+        # التحقق من وجود مهام مرتبطة بالقالب
+        if not template_tasks or template_tasks.count() == 0:
+            return {"message": "No tasks found for the selected template."}
+
+        # نسخ المهام إلى جدول Task
+        new_tasks = []
+        for task in template_tasks:
+            new_task = {
+                "TemplateID": task["TemplateID"],
+                "UserID": ObjectId(user_id),
+                "TaskName": task["TaskName"],
+                "StartDate": task["StartDate"],
+                "EndDate": task["EndDate"],
+                "Repetition": task.get("Repetition"),
+                "Point": task.get("Point", 0),
+                "Status": "Pending",
+                "CreatedAt": datetime.utcnow(),
+                "UpdatedAt": datetime.utcnow(),
+            }
+            # إدخال المهمة الجديدة في جدول Task
+            result = Task.collection.insert_one(new_task)
+            new_tasks.append(result.inserted_id)  # حفظ معرّف المهمة الجديدة
+        return {
+            "message": "Tasks transferred successfully",
+            "transferred_task_count": len(new_tasks),
+            "task_ids": [str(task_id) for task_id in new_tasks],
+        }
 
 # اسماء القوالب
 class TemplateModel:
@@ -155,15 +188,30 @@ class TemplateTask:
 
     @staticmethod
     def add_task_to_template(data):
-        """
-        إضافة مهمة جديدة إلى جدول template_task
-        """
+        # إضافة مهمة جديدة إلى جدول template_task
         try:
             # التحقق من الحقول المطلوبة
             required_fields = ["TemplateID", "TaskID", "Description", "StartDate", "EndDate", "Date", "Point", "Status", "Repetition"]
             for field in required_fields:
                 if field not in data:
                     raise ValueError(f"Missing required field: {field}")
+
+            if 'TemplateID' in data and isinstance(data['TemplateID'], str):
+                try:
+                    data['TemplateID'] = ObjectId(data['TemplateID'])
+                except Exception as e:
+                    raise ValueError(f"Invalid TemplateID format: {e}")
+            
+             # التحقق من وجود القالب في جدول القوالب
+            template_exists = TemplateModel.collection.find_one({"_id": data['TemplateID']})
+            if not template_exists:
+               raise ValueError(f"Template with ID {data['TemplateID']} does not exist.")
+
+            # تحويل الحقل Date إذا كان من النوع datetime.date
+            if 'Date' in data:
+                date_value = data['Date']
+                if isinstance(date_value, date):  # التحقق مما إذا كان التاريخ من نوع date
+                   data['Date'] = datetime.combine(date_value, datetime.min.time())
 
             # إضافة الوقت الحالي كوقت الإنشاء والتحديث
             current_time = datetime.utcnow()
@@ -178,12 +226,31 @@ class TemplateTask:
             raise RuntimeError(f"Failed to add task to template: {e}")
         except ValueError as e:
             raise e
-        
+
+    @staticmethod
+    def delete_task_from_template(template_id, task_id):
+        try:
+            # التأكد من تحويل الحقول إلى ObjectId
+            template_id = ObjectId(template_id)
+            task_id = ObjectId(task_id)
+
+            # حذف المهمة بناءً على TemplateID و TaskID
+            result = TemplateTask.collection.delete_one({
+                "TemplateID": template_id,
+                "TaskID": task_id
+            })
+
+            # التحقق مما إذا تم حذف المهمة بنجاح
+            if result.deleted_count > 0:
+                return {"message": "Task deleted successfully"}
+            else:
+                return {"error": "Task not found"}, 404
+        except Exception as e:
+            raise RuntimeError(f"Failed to delete task from template: {e}")
+
     @staticmethod
     def assign_tasks_to_user(template_id, user_id):
-        """
-        نقل المهام من template_task إلى tasks للمستخدم المحدد.
-        """
+        # نقل المهام من template_task إلى tasks للمستخدم المحدد.
         tasks_collection = db['tasks']  # مجموعة المهام العادية
 
         try:

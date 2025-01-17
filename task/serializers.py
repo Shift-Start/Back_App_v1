@@ -32,12 +32,20 @@ class TemplateTaskSerializer(serializers.Serializer):
     Repetition = serializers.CharField(max_length=50)
 
 class AddTemplateTaskSerializer(serializers.Serializer):
-    TemplateID = serializers.CharField(max_length=255, required=True)
+    TemplateID = serializers.CharField(max_length=24, required=True)  # ObjectId بطول 24 حرفًا
     TaskID = serializers.CharField(max_length=255, required=True)
     Description = serializers.CharField(max_length=1000, required=False, allow_blank=True)
     StartDate = serializers.DateTimeField(required=True)
     EndDate = serializers.DateTimeField(required=True)
-    Date = serializers.DateField(required=True)
+    Date = serializers.DateField(required=True, input_formats=['%Y-%m-%d', '%d/%m/%Y', '%Y/%m/%d'])
     Point = serializers.FloatField(required=True)
     Status = serializers.CharField(max_length=50, required=True)
     Repetition = serializers.CharField(max_length=50, required=True)
+
+    def validate_TemplateID(self, value):
+        # التحقق من أن TemplateID صالح
+        try:
+            ObjectId(value)  # محاولة تحويل النص إلى ObjectId
+        except Exception:
+            raise serializers.ValidationError("Invalid TemplateID format.")
+        return value

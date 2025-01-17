@@ -1,4 +1,6 @@
 from datetime import datetime
+from rest_framework.decorators import api_view, permission_classes
+
 from string import Template
 from django.http import JsonResponse
 from rest_framework.views import APIView
@@ -158,18 +160,25 @@ class AssignTemplateTasksView(APIView):
 
 class AddTemplateTaskView(APIView):
     permission_classes = [AllowAny]
+
     # View لإضافة مهام جديدة إلى جدول template_task
     def post(self, request):
-        # التحقق مما إذا كان المستخدم مسؤولاً بناءً على خاصية is_admin
+        #(الاصلي موجود تحته للتجريب فقطططططط)
         user = request.user
         if not user.is_authenticated:
-           user.is_admin = True  # تعديل يدوي أثناء التجربة
-    
-    # تحقق من الصلاحيات
-        if not getattr(user, 'is_admin', False):
-           return Response({"error": "Permission denied. Admins only."}, status=status.HTTP_403_FORBIDDEN)
-        # user = request.user  # المستخدم الحالي
-        # if not user.is_authenticated or not getattr(user, 'is_admin', False):
+            user.is_admin = True  # تحديد هذا يدويًا فقط للتجربة
+
+        # التحقق من صلاحية المستخدم كأدمن
+        if not getattr(user, 'is_admin', False):  # تحقق من أن المستخدم هو المسؤول
+            return Response({"error": "Permission denied. Admins only."}, status=status.HTTP_403_FORBIDDEN)
+
+        #(هذه من اجل المستخد يجب تسجيل دخوله )
+        # التحقق من أن المستخدم مسجل الدخول وأنه مسؤول
+        # user = request.user
+        # if not user.is_authenticated:
+        #     return Response({"error": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # if not getattr(user, 'is_admin', False):  # تحقق من أن المستخدم هو المسؤول
         #     return Response({"error": "Permission denied. Admins only."}, status=status.HTTP_403_FORBIDDEN)
 
         # استلام البيانات والتحقق من صحتها
@@ -179,6 +188,10 @@ class AddTemplateTaskView(APIView):
                 # تمرير البيانات للتحقق
                 task_data = serializer.validated_data
                 result = TemplateTask.add_task_to_template(task_data)
+
+                # تحويل الحقول التي تحتوي على ObjectId إلى نصوص قبل الإرجاع
+                result['_id'] = str(result['_id'])  # تحويل _id إلى نص
+                result['TemplateID'] = str(result['TemplateID'])  # تحويل TemplateID إلى نص
 
                 return Response(
                     {"message": "Task added to template successfully", "task": result},
@@ -191,3 +204,87 @@ class AddTemplateTaskView(APIView):
 
         # في حالة كانت البيانات غير صحيحة
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteTemplateTaskView(APIView):
+    permission_classes = [AllowAny]  # التأكد من أنه مسموح للمشرفين فقط، يمكن تعديلها لاحقًا
+
+    def delete(self, request):
+        # استلام TemplateID و TaskID من البيانات في الطلب
+        template_id = request.data.get("TemplateID")
+        task_id = request.data.get("TaskID")  # هنا TaskID وليس _id
+
+        # تحقق من وجود TemplateID و TaskID
+        if not template_id or not task_id:
+            return Response({"error": "TemplateID and TaskID are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # تحويل TemplateID و TaskID إلى ObjectId إذا كانت هي بصيغة string
+            template_id = ObjectId(template_id)
+            task_id = ObjectId(task_id)  # تحويل TaskID إلى ObjectId لأنه سيتم استخدام _id في قاعدة البيانات
+
+            # البحث عن المهمة داخل جدول template_task باستخدام TaskID المحول إلى _id
+            task = TemplateTask.collection.find_one({"_id": task_id, "TemplateID": template_id})
+
+            if not task:
+                return Response({"error": "Task not found in the template."}, status=status.HTTP_404_NOT_FOUND)
+
+            # حذف المهمة من جدول template_task باستخدام _id
+            TemplateTask.collection.delete_one({"_id": task_id})
+
+            return Response({"message": "Task deleted successfully."}, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({"error": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# هذا الكود يقوم بالتحقق من ان المستخدم قد سجل دخول(الاصلييييييييي)
+# class TransferTemplateTasksView(APIView):
+#     permission_classes = [AllowAny]
+#     # API View لنسخ المهام من جدول Template_Task إلى جدول Task بناءً على TemplateID
+#     def post(self, request):
+#         user = request.user
+
+#         if not user.is_authenticated:
+#             return Response({"error": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
+
+#         template_id = request.data.get('TemplateID')
+#         if not template_id:
+#             return Response({"error": "TemplateID is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         try:
+#             result = Task.transfer_template_tasks_to_user(template_id, str(user.id))
+
+#             return Response({
+#                 "message": result["message"],
+#                 "task_ids": result.get("task_ids", []),
+#                 "transferred_task_count": result["transferred_task_count"]
+#             }, status=status.HTTP_201_CREATED)
+
+#         except Exception as e:
+#             return Response({"error": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+#كود نفس السابق ولكن للتجريب بدون تسجيل دخول
+class TransferTemplateTasksView(APIView):
+    permission_classes = [AllowAny]  # السماح للجميع بالوصول إلى هذا الـ API
+
+    def post(self, request):
+        # جلب TemplateID من البيانات المرسلة في الطلب
+        template_id = request.data.get('TemplateID')
+        if not template_id:
+            return Response({"error": "TemplateID is required"}, status=status.HTTP_400_BAD_REQUEST)
+        # تعيين user_id وهمي
+        user_id = "12345"  # user_id وهمي
+
+        try:
+            # تمرير template_id و user_id الوهمي إلى الوظيفة
+            result = Task.transfer_template_tasks_to_user(template_id, user_id)
+
+            return Response({
+                "message": result["message"],
+                "task_ids": result.get("task_ids", []),
+                "transferred_task_count": result["transferred_task_count"]
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({"error": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
