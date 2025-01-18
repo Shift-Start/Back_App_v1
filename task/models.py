@@ -51,7 +51,6 @@ class Task:
             for task in tasks_cursor:
                 task["_id"] = str(task["_id"])
                 tasks_list.append(task)
-
             if not tasks_list:
                 return {"error": "No tasks found for this user"}, 404
             return tasks_list, 200
@@ -77,17 +76,14 @@ class Task:
         try:
             if not ObjectId.is_valid(task_id):
                 return {"error": "Invalid Task ID"}, 400
-            
             data['updated_at'] = datetime.utcnow()
             result = Task.collection.update_one({"_id": ObjectId(task_id)}, {"$set": data})
-            
             if result.matched_count == 0:
                 return {"error": "Task not found"}, 404
             elif result.modified_count > 0:
                 return {"message": "Task updated successfully"}, 200
             else:
                 return {"message": "No changes made to the task"}, 304
-        
         except Exception as e:
             return {"error": f"Error while updating task: {str(e)}"}, 500
 
@@ -108,7 +104,6 @@ class Task:
         # ينقل المهام الخاصة بالقالب المحدد إلى جدول المهام بناءً على TemplateID.
         # جلب المهام الخاصة بالقالب بناءً على TemplateID
         template_tasks = TemplateTask.collection.find({"TemplateID": ObjectId(template_id)})
-
         # التحقق من وجود مهام مرتبطة بالقالب
         if not template_tasks or template_tasks.count() == 0:
             return {"message": "No tasks found for the selected template."}
@@ -201,12 +196,10 @@ class TemplateTask:
                     data['TemplateID'] = ObjectId(data['TemplateID'])
                 except Exception as e:
                     raise ValueError(f"Invalid TemplateID format: {e}")
-            
-             # التحقق من وجود القالب في جدول القوالب
+            # التحقق من وجود القالب في جدول القوالب
             template_exists = TemplateModel.collection.find_one({"_id": data['TemplateID']})
             if not template_exists:
                raise ValueError(f"Template with ID {data['TemplateID']} does not exist.")
-
             # تحويل الحقل Date إذا كان من النوع datetime.date
             if 'Date' in data:
                 date_value = data['Date']
@@ -233,13 +226,11 @@ class TemplateTask:
             # التأكد من تحويل الحقول إلى ObjectId
             template_id = ObjectId(template_id)
             task_id = ObjectId(task_id)
-
             # حذف المهمة بناءً على TemplateID و TaskID
             result = TemplateTask.collection.delete_one({
                 "TemplateID": template_id,
                 "TaskID": task_id
             })
-
             # التحقق مما إذا تم حذف المهمة بنجاح
             if result.deleted_count > 0:
                 return {"message": "Task deleted successfully"}
@@ -249,17 +240,44 @@ class TemplateTask:
             raise RuntimeError(f"Failed to delete task from template: {e}")
 
     @staticmethod
+    def update_task_in_template(template_id, task_id, updated_data):
+        try:
+        # التأكد من تحويل الحقول إلى ObjectId
+            template_id = ObjectId(template_id)
+            task_id = ObjectId(task_id)
+        # التحقق من وجود المهمة قبل التحديث
+            task = TemplateTask.collection.find_one({
+                "_id": task_id,
+                "TemplateID": template_id
+            })
+            if not task:
+                return {"error": "Task not found"}, 404
+        # تحديث بيانات المهمة باستخدام $set
+            result = TemplateTask.collection.update_one(
+                {"_id": task_id, "TemplateID": template_id},
+                {"$set": updated_data}
+            )
+        # التحقق من نجاح التحديث
+            if result.modified_count > 0:
+            # جلب المهمة بعد التحديث لإعادتها كاستجابة
+                updated_task = TemplateTask.collection.find_one({"_id": task_id})
+                updated_task["_id"] = str(updated_task["_id"])  # تحويل ObjectId إلى نص
+                updated_task["TemplateID"] = str(updated_task["TemplateID"])  # تحويل ObjectId إلى نص
+                return {"message": "Task updated successfully", "task": updated_task}
+            else:
+                return {"error": "No changes were made to the task"}, 400
+        except Exception as e:
+            raise RuntimeError(f"Failed to update task in template: {e}")
+
+    @staticmethod
     def assign_tasks_to_user(template_id, user_id):
         # نقل المهام من template_task إلى tasks للمستخدم المحدد.
         tasks_collection = db['tasks']  # مجموعة المهام العادية
-
         try:
             # جلب المهام المرتبطة بـ TemplateID
             template_tasks = TemplateTask.collection.find({"TemplateID": template_id})
-            
             if template_tasks.count() == 0:
                 raise ValueError(f"No tasks found for TemplateID: {template_id}")
-            
             # نسخ المهام إلى tasks
             new_tasks = []
             for task in template_tasks:
@@ -278,7 +296,6 @@ class TemplateTask:
                     "updated_at": datetime.utcnow(),
                 }
                 new_tasks.append(task_copy)
-
             # إدخال المهام الجديدة في tasks
             result = tasks_collection.insert_many(new_tasks)
             return {"inserted_count": len(result.inserted_ids)}

@@ -160,6 +160,7 @@ class AssignTemplateTasksView(APIView):
 
 class AddTemplateTaskView(APIView):
     permission_classes = [AllowAny]
+#      permission_classes = [IsAdminUser] يجب تبديله الى ان تكون ادمن فقط من يستطيع الوصول
 
     # View لإضافة مهام جديدة إلى جدول template_task
     def post(self, request):
@@ -206,35 +207,61 @@ class AddTemplateTaskView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DeleteTemplateTaskView(APIView):
-    permission_classes = [AllowAny]  # التأكد من أنه مسموح للمشرفين فقط، يمكن تعديلها لاحقًا
+    permission_classes = [AllowAny]
+#      permission_classes = [IsAdminUser] يجب تبديله الى ان تكون ادمن فقط من يستطيع الوصول
 
     def delete(self, request):
-        # استلام TemplateID و TaskID من البيانات في الطلب
-        template_id = request.data.get("TemplateID")
-        task_id = request.data.get("TaskID")  # هنا TaskID وليس _id
-
-        # تحقق من وجود TemplateID و TaskID
+        # استلام TemplateID و TaskID والتحقق من وجودهما
+        template_id, task_id = request.data.get("TemplateID"), request.data.get("TaskID")
         if not template_id or not task_id:
             return Response({"error": "TemplateID and TaskID are required."}, status=status.HTTP_400_BAD_REQUEST)
-
         try:
-            # تحويل TemplateID و TaskID إلى ObjectId إذا كانت هي بصيغة string
-            template_id = ObjectId(template_id)
-            task_id = ObjectId(task_id)  # تحويل TaskID إلى ObjectId لأنه سيتم استخدام _id في قاعدة البيانات
-
-            # البحث عن المهمة داخل جدول template_task باستخدام TaskID المحول إلى _id
+            # تحويل TemplateID و TaskID إلى ObjectId
+            template_id, task_id = ObjectId(template_id), ObjectId(task_id)
+            # البحث عن المهمة
             task = TemplateTask.collection.find_one({"_id": task_id, "TemplateID": template_id})
-
             if not task:
                 return Response({"error": "Task not found in the template."}, status=status.HTTP_404_NOT_FOUND)
-
-            # حذف المهمة من جدول template_task باستخدام _id
+            # حذف المهمة
             TemplateTask.collection.delete_one({"_id": task_id})
-
             return Response({"message": "Task deleted successfully."}, status=status.HTTP_200_OK)
-        
         except Exception as e:
             return Response({"error": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class UpdateTemplateTaskView(APIView):
+    permission_classes = [AllowAny]  # يمكن تخصيص الصلاحيات لاحقًا
+
+    def put(self, request):
+        # التحقق من الحقول المطلوبة
+        required_fields = ["TemplateID", "_id", "UpdatedData"]
+        missing_fields = [field for field in required_fields if not request.data.get(field)]
+        if missing_fields:
+            return Response({"error": f"Missing required fields: {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        template_id = request.data["TemplateID"]
+        task_id = request.data["_id"]
+        updated_data = request.data["UpdatedData"]
+
+        if not isinstance(updated_data, dict) or not updated_data:
+            return Response({"error": "UpdatedData must be a non-empty dictionary."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            # تحويل TemplateID و _id إلى ObjectId
+            template_id, task_id = ObjectId(template_id), ObjectId(task_id)
+            # البحث عن المهمة
+            task = TemplateTask.collection.find_one({"_id": task_id, "TemplateID": template_id})
+            if not task:
+                return Response({"error": "Task not found in the template."}, status=status.HTTP_404_NOT_FOUND)
+            # تحديث المهمة
+            TemplateTask.collection.update_one({"_id": task_id}, {"$set": updated_data})
+            # جلب المهمة المحدثة وتحويل ObjectId إلى نص
+            updated_task = TemplateTask.collection.find_one({"_id": task_id})
+            updated_task['_id'], updated_task['TemplateID'] = str(updated_task['_id']), str(updated_task['TemplateID'])
+            return Response({"message": "Task updated successfully.", "task": updated_task}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
 
 # هذا الكود يقوم بالتحقق من ان المستخدم قد سجل دخول(الاصلييييييييي)
 # class TransferTemplateTasksView(APIView):

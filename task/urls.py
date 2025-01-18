@@ -12,8 +12,8 @@ from task.views import (
     AssignTemplateTasksView,
     AddTemplateTaskView,
     TransferTemplateTasksView,
-    DeleteTemplateTaskView
-
+    DeleteTemplateTaskView,
+    UpdateTemplateTaskView
 )
 
 urlpatterns = [
@@ -39,6 +39,8 @@ urlpatterns = [
     path('template-tasks/add/', AddTemplateTaskView.as_view(), name='add-template-task'),
     #حذف تاسك حاص بالقالب عن طريق id القالب , id المهمة
     path('template-tasks/delete/', DeleteTemplateTaskView.as_view(), name='delete_template_task'),
+    
+    path('template-tasks/update/', UpdateTemplateTaskView.as_view(), name='update_template_task'),
     #
     path('assign-template-tasks/<str:template_id>/', AssignTemplateTasksView.as_view(), name='assign_template_tasks'),
 
@@ -89,4 +91,15 @@ urlpatterns = [
 # {
 #   "TemplateID": "6788097711977c36a859d7d2",
 #   "TaskID": "678a8faee4978149c8a26f8b"
+# }
+#http://127.0.0.1:8000/api/tasks/template-tasks/update/ التعديل على مهام القالب
+#{
+#     "TemplateID": "67880a49670aa7facb59617a",
+#     "_id": "678ab031fe13894c62f1b19b",
+#     "UpdatedData": {
+#         "Description": "Updated task description",
+#         "StartDate": "2025-01-18T09:00:00.000+00:00",
+#         "EndDate": "2025-01-18T11:00:00.000+00:00",
+#         "Point": 15.0
+#     }
 # }
