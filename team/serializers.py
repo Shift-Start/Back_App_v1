@@ -1,6 +1,11 @@
+<<<<<<< HEAD
+from rest_framework import serializers
+
+=======
 from bson import ObjectId
 from rest_framework import serializers
 from team.models import TeamMember
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815
 class TeamSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=100)
     admin_id = serializers.CharField(max_length=50)
@@ -15,6 +20,8 @@ class TeamMemberSerializer(serializers.Serializer):
     permissions = serializers.JSONField()
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
+<<<<<<< HEAD
+=======
 
 class TeamTaskSerializer(serializers.Serializer):
     team_task_id = serializers.CharField(read_only=True)  # يتم إنشاؤه تلقائيًا
@@ -37,3 +44,4 @@ class TeamTaskSerializer(serializers.Serializer):
             if not member:
                 raise serializers.ValidationError("The assigned member does not exist in the team.")
         return data
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815

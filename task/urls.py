@@ -9,9 +9,7 @@ from task.views import (
     TemplateView,
     DeleteTemplateByNameView,
     DeleteTemplateByIdView,
-    # AssignTemplateTasksView,
     AddTemplateTaskView,
-    # TransferTemplateTasksView,
     DeleteTemplateTaskView,
     UpdateTemplateTaskView,
     AssignTemplateTasksView
@@ -103,8 +101,6 @@ urlpatterns = [
 #         "Point": 15.0
 #     }
 # }
-
-
 #http://127.0.0.1:8000/api/tasks/assign-template-tasks/67880a49670aa7facb59617a/ نقل التاسكات التي اختارها المستخدم من جدول تاسكات القوالب الى جدول التاسكات الكلي مع اعطاءه id المستخدم
 #{
 #     "user_id": "676313e71c6fa6b40d339c6a"

@@ -1,4 +1,14 @@
 from rest_framework.views import APIView
+<<<<<<< HEAD
+from rest_framework.response import Response
+from rest_framework import status
+from account.models import User
+from login.serializers import LoginSerializer,RegisterSerializer
+from rest_framework.permissions import AllowAny
+
+class LoginAPIView(APIView):
+    permission_classes= [AllowAny]
+=======
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
@@ -35,6 +45,7 @@ from login.serializers import LoginSerializer,RegisterSerializer
 
 class LoginAPIView(APIView):
     permission_classes = [AllowAny]
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
@@ -64,6 +75,8 @@ class LoginAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+<<<<<<< HEAD
+=======
 
 
 # class RegisterAPIView(APIView):
@@ -83,6 +96,7 @@ class LoginAPIView(APIView):
 #                 status=status.HTTP_201_CREATED,
 #             )
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815
 class RegisterAPIView(APIView):
     permission_classes= [AllowAny]
     def post(self, request):
@@ -106,3 +120,10 @@ class RegisterAPIView(APIView):
             )
         # في حالة حدوث خطأ في التحقق من البيانات
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+<<<<<<< HEAD
+    
+
+
+
+=======
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815

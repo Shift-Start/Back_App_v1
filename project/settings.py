@@ -97,6 +97,10 @@ WSGI_APPLICATION = 'project.wsgi.application'
 #                     }
 #     }
 # }
+<<<<<<< HEAD
+CORS_ALLOW_ALL_ORIGINS = True
+=======
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815
 
 from pymongo import MongoClient
 
@@ -104,6 +108,20 @@ client = MongoClient("mongodb://127.0.0.1:27017/")
 db = client["Shift-Start-db"]  # اسم قاعدة البيانات
 
 
+<<<<<<< HEAD
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',  # أو أي مصادقة تستخدمها
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',  # السماح فقط للمستخدمين المسجلين
+    ],
+}
+
+
+=======
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
 

@@ -1,17 +1,30 @@
+<<<<<<< HEAD
+=======
 from django.shortcuts import render
 from rest_framework.permissions import AllowAny
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from bson import ObjectId
 from datetime import datetime
 from team.models import Team, TeamMember
+<<<<<<< HEAD
+from team.serializers import TeamSerializer, TeamMemberSerializer
+
+# دالة مساعدة لتحويل ObjectId إلى نصوص
+def convert_object_id_to_string(data):
+    """
+    تحويل جميع الحقول التي تحتوي على ObjectId إلى نصوص.
+    """
+=======
 from .models import TeamMember, TeamTask
 from team.serializers import TeamSerializer, TeamMemberSerializer, TeamTaskSerializer
 
 # دالة مساعدة لتحويل ObjectId إلى نصوص
 def convert_object_id_to_string(data):
     # تحويل جميع الحقول التي تحتوي على ObjectId إلى نصوص.
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815
     if isinstance(data, list):
         for item in data:
             convert_object_id_to_string(item)
@@ -23,9 +36,16 @@ def convert_object_id_to_string(data):
                 convert_object_id_to_string(value)
     return data
 
+<<<<<<< HEAD
+
+
+# عرض وإنشاء الفرق
+class TeamListCreateView(APIView):
+=======
 # عرض وإنشاء الفرق
 class TeamListCreateView(APIView):
     permission_classes = [AllowAny]  # إضافة هنا للسماح للجميع بالوصول
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815
     def post(self, request):
         data = request.data
         serializer = TeamSerializer(data=data)
@@ -43,9 +63,15 @@ class TeamListCreateView(APIView):
         team_list = [convert_object_id_to_string(team) for team in teams]  # تحويل ObjectId إلى نصوص
         return Response(team_list, status=status.HTTP_200_OK)
 
+<<<<<<< HEAD
+
+# عرض وإنشاء أعضاء الفريق
+class TeamMemberListCreateView(APIView):
+=======
 # عرض وإنشاء أعضاء الفريق
 class TeamMemberListCreateView(APIView):
     permission_classes = [AllowAny]
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815
     def post(self, request):
         data = request.data
         serializer = TeamMemberSerializer(data=data)
@@ -54,11 +80,26 @@ class TeamMemberListCreateView(APIView):
             member_data['created_at'] = datetime.utcnow()
             member_data['updated_at'] = datetime.utcnow()
             created_member = TeamMember.add_team_member(member_data)
+<<<<<<< HEAD
+            created_member = convert_object_id_to_string(created_member)  # تحويل ObjectId إلى نصوص
+=======
             created_member = convert_object_id_to_string(created_member)
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815
             return Response(created_member, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
+<<<<<<< HEAD
+        members = TeamMember.collection.find()
+        member_list = [convert_object_id_to_string(member) for member in members]  # تحويل ObjectId إلى نصوص
+        return Response(member_list, status=status.HTTP_200_OK)
+
+
+
+
+# تحديث فريق
+class TeamUpdateView(APIView):
+=======
         # التحقق من وجود `team_id` في معلمات الطلب
         team_id = request.query_params.get('team_id', None)
         # إذا كان `team_id` موجودًا، نقوم بتصفية الأعضاء بناءً عليه
@@ -75,6 +116,7 @@ class TeamMemberListCreateView(APIView):
 class TeamUpdateView(APIView):
     permission_classes = [AllowAny]  # إضافة هنا للسماح للجميع بالوصول
 
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815
     def put(self, request, team_id):
         data = request.data
         serializer = TeamSerializer(data=data)
@@ -87,6 +129,21 @@ class TeamUpdateView(APIView):
             return Response(updated_team, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+<<<<<<< HEAD
+
+# حذف فريق
+class TeamDeleteView(APIView):
+    def delete(self, request, team_id):
+        team = Team.get_team(ObjectId(team_id))
+        if team:
+            Team.delete_team(ObjectId(team_id))
+            return Response({"message": "Team deleted successfully."}, status=status.HTTP_200_OK)
+        return Response({"error": "Team not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+# تحديث عضو فريق
+class TeamMemberUpdateView(APIView):
+=======
 # حذف فريق
 class TeamDeleteView(APIView):
     permission_classes = [AllowAny]
@@ -108,6 +165,7 @@ class TeamDeleteView(APIView):
 class TeamMemberUpdateView(APIView):
     permission_classes = [AllowAny]  # إضافة هنا للسماح للجميع بالوصول
 
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815
     def put(self, request, member_id):
         data = request.data
         serializer = TeamMemberSerializer(data=data)
@@ -120,6 +178,17 @@ class TeamMemberUpdateView(APIView):
             return Response(updated_member, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+<<<<<<< HEAD
+
+# حذف عضو فريق
+class TeamMemberDeleteView(APIView):
+    def delete(self, request, member_id):
+        member = TeamMember.get_team_member(ObjectId(member_id))
+        if member:
+            TeamMember.delete_team_member(ObjectId(member_id))
+            return Response({"message": "Team member deleted successfully."}, status=status.HTTP_200_OK)
+        return Response({"error": "Team member not found."}, status=status.HTTP_404_NOT_FOUND)
+=======
 # حذف عضو فريق
 class TeamMemberDeleteView(APIView):
     permission_classes = [AllowAny]
@@ -275,3 +344,4 @@ class TeamTasksByTeamView(APIView):
                 {"error": f"Failed to fetch tasks: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815
