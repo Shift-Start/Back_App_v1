@@ -1,6 +1,10 @@
 import bcrypt
 from rest_framework import serializers
+<<<<<<< HEAD
 from account.models import User
+=======
+from login.models import User
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -46,6 +50,9 @@ class RegisterSerializer(serializers.Serializer):
         # إنشاء المستخدم باستخدام الدالة الموجودة في `User`
         User.create_user(user_data)
         return user_data
+<<<<<<< HEAD
     
 
     
+=======
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815

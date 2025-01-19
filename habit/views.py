@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -348,3 +349,8 @@ class PuzzleProgressView(APIView):
         Habit.collection.update_one({"_id": ObjectId(habit_id)}, {"$set": {"progress": 0}})
 
         return Response({"message": "Progress reset successfully."}, status=status.HTTP_200_OK)
+=======
+from django.shortcuts import render
+
+# Create your views here.
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815

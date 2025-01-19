@@ -8,7 +8,11 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
+<<<<<<< HEAD
 set VIRTUAL_ENV=C:\Users\ibrah\OneDrive\Desktop\Back_App\env
+=======
+set VIRTUAL_ENV=C:\Back\Back_App\env
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815
 
 if not defined PROMPT set PROMPT=$P$G
 

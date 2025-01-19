@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # from pymongo import MongoClient
 # from datetime import datetime
 
@@ -105,3 +106,8 @@ class Challenge:
     @staticmethod
     def delete_challenge(challenge_id):
         Challenge.collection.delete_one({"_id": ObjectId(challenge_id)})
+=======
+from django.db import models
+
+# Create your models here.
+>>>>>>> f70151a67db44782b0182c41b22e35dbcd1ed815
