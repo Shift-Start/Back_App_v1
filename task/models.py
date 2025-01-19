@@ -28,7 +28,7 @@ class Task:
 
     @staticmethod
     def get_task_by_id(task_id):
-#         استرجاع مهمة باستخدام معرف المهمة.
+    # استرجاع مهمة باستخدام معرف المهمة.
         try:
             if not ObjectId.is_valid(task_id):
                 raise ValueError(f"Invalid Task ID: {task_id} is not a valid ObjectId")
@@ -99,39 +99,6 @@ class Task:
         except Exception as e:
             raise ValueError(f"Error while retrieving tasks: {e}")
 
-    @staticmethod
-    def transfer_template_tasks_to_user(template_id, user_id):
-        # ينقل المهام الخاصة بالقالب المحدد إلى جدول المهام بناءً على TemplateID.
-        # جلب المهام الخاصة بالقالب بناءً على TemplateID
-        template_tasks = TemplateTask.collection.find({"TemplateID": ObjectId(template_id)})
-        # التحقق من وجود مهام مرتبطة بالقالب
-        if not template_tasks or template_tasks.count() == 0:
-            return {"message": "No tasks found for the selected template."}
-
-        # نسخ المهام إلى جدول Task
-        new_tasks = []
-        for task in template_tasks:
-            new_task = {
-                "TemplateID": task["TemplateID"],
-                "UserID": ObjectId(user_id),
-                "TaskName": task["TaskName"],
-                "StartDate": task["StartDate"],
-                "EndDate": task["EndDate"],
-                "Repetition": task.get("Repetition"),
-                "Point": task.get("Point", 0),
-                "Status": "Pending",
-                "CreatedAt": datetime.utcnow(),
-                "UpdatedAt": datetime.utcnow(),
-            }
-            # إدخال المهمة الجديدة في جدول Task
-            result = Task.collection.insert_one(new_task)
-            new_tasks.append(result.inserted_id)  # حفظ معرّف المهمة الجديدة
-        return {
-            "message": "Tasks transferred successfully",
-            "transferred_task_count": len(new_tasks),
-            "task_ids": [str(task_id) for task_id in new_tasks],
-        }
-
 # اسماء القوالب
 class TemplateModel:
     collection = db['Template_name']
@@ -179,14 +146,14 @@ class TemplateModel:
             return {"error": f"An error occurred: {str(e)}"}, 500
 
 class TemplateTask:
-    collection = db['template_task']  # مجموعة المهام الخاصة بالقوالب
+    collection = db['template_task']
 
     @staticmethod
     def add_task_to_template(data):
         # إضافة مهمة جديدة إلى جدول template_task
         try:
             # التحقق من الحقول المطلوبة
-            required_fields = ["TemplateID", "TaskID", "Description", "StartDate", "EndDate", "Date", "Point", "Status", "Repetition"]
+            required_fields = ["TemplateID", "TaskName", "Description", "StartDate", "EndDate", "Date", "Point", "Status", "Repetition"]
             for field in required_fields:
                 if field not in data:
                     raise ValueError(f"Missing required field: {field}")
@@ -199,19 +166,18 @@ class TemplateTask:
             # التحقق من وجود القالب في جدول القوالب
             template_exists = TemplateModel.collection.find_one({"_id": data['TemplateID']})
             if not template_exists:
-               raise ValueError(f"Template with ID {data['TemplateID']} does not exist.")
+                raise ValueError(f"Template with ID {data['TemplateID']} does not exist.")
             # تحويل الحقل Date إذا كان من النوع datetime.date
             if 'Date' in data:
                 date_value = data['Date']
-                if isinstance(date_value, date):  # التحقق مما إذا كان التاريخ من نوع date
-                   data['Date'] = datetime.combine(date_value, datetime.min.time())
+                if isinstance(date_value, date):
+                    data['Date'] = datetime.combine(date_value, datetime.min.time())
 
             # إضافة الوقت الحالي كوقت الإنشاء والتحديث
             current_time = datetime.utcnow()
             data['created_at'] = current_time
             data['updated_at'] = current_time
 
-            # إدخال البيانات إلى جدول template_task
             result = TemplateTask.collection.insert_one(data)
             data['_id'] = str(result.inserted_id)
             return data
@@ -223,7 +189,6 @@ class TemplateTask:
     @staticmethod
     def delete_task_from_template(template_id, task_id):
         try:
-            # التأكد من تحويل الحقول إلى ObjectId
             template_id = ObjectId(template_id)
             task_id = ObjectId(task_id)
             # حذف المهمة بناءً على TemplateID و TaskID
@@ -242,7 +207,6 @@ class TemplateTask:
     @staticmethod
     def update_task_in_template(template_id, task_id, updated_data):
         try:
-        # التأكد من تحويل الحقول إلى ObjectId
             template_id = ObjectId(template_id)
             task_id = ObjectId(task_id)
         # التحقق من وجود المهمة قبل التحديث
@@ -270,36 +234,33 @@ class TemplateTask:
             raise RuntimeError(f"Failed to update task in template: {e}")
 
     @staticmethod
-    def assign_tasks_to_user(template_id, user_id):
-        # نقل المهام من template_task إلى tasks للمستخدم المحدد.
-        tasks_collection = db['tasks']  # مجموعة المهام العادية
-        try:
-            # جلب المهام المرتبطة بـ TemplateID
-            template_tasks = TemplateTask.collection.find({"TemplateID": template_id})
-            if template_tasks.count() == 0:
-                raise ValueError(f"No tasks found for TemplateID: {template_id}")
-            # نسخ المهام إلى tasks
-            new_tasks = []
-            for task in template_tasks:
-                task_copy = {
-                    "TaskID": task["TaskID"],
-                    "TemplateID": task["TemplateID"],
-                    "Description": task.get("Description", ""),
-                    "StartDate": task["StartDate"],
-                    "EndDate": task["EndDate"],
-                    "Date": task.get("Date"),
-                    "Point": task.get("Point", 0),
-                    "Status": task["Status"],
-                    "Repetition": task["Repetition"],
-                    "UserID": user_id,  # إضافة معرف المستخدم
-                    "created_at": datetime.utcnow(),
-                    "updated_at": datetime.utcnow(),
-                }
-                new_tasks.append(task_copy)
-            # إدخال المهام الجديدة في tasks
-            result = tasks_collection.insert_many(new_tasks)
-            return {"inserted_count": len(result.inserted_ids)}
-        except PyMongoError as e:
-            raise RuntimeError(f"Failed to assign tasks: {e}")
-        except ValueError as e:
-            raise e
+    def transfer_template_tasks_to_user(template_id, user_id):
+        #نقل المهام المرتبطة بالقالب المحدد إلى جدول المهام للمستخدم المحدد.
+        template_tasks = TemplateTask.collection.find({"TemplateID": ObjectId(template_id)})
+
+        if TemplateTask.collection.count_documents({"TemplateID": ObjectId(template_id)}) == 0:
+            raise ValueError("No tasks found for the selected template.")
+        # إعداد المهام الجديدة لإضافتها إلى مجموعة tasks
+        new_tasks = []
+        for task in template_tasks:
+            new_task = {
+                "TemplateID": str(task["TemplateID"]),
+                "UserID": str(user_id),
+                "TaskName": task.get("TaskName", ""),
+                "StartDate": task.get("StartDate"),
+                "Description": task.get("Description", ""),
+                "EndDate": task.get("EndDate"),
+                "Repetition": task.get("Repetition", ""),
+                "Point": task.get("Point", 0),
+                "Status": "Pending",
+                "CreatedAt": datetime.utcnow(),
+                "UpdatedAt": datetime.utcnow(),
+            }
+            new_tasks.append(new_task)
+        tasks_collection = db["tasks"]
+        result = tasks_collection.insert_many(new_tasks)
+        return {
+            "message": "Tasks transferred successfully",
+            "transferred_task_count": len(result.inserted_ids),
+            "task_ids": [str(task_id) for task_id in result.inserted_ids],
+        }

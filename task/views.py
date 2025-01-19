@@ -1,7 +1,6 @@
 from datetime import datetime
 from rest_framework.decorators import api_view, permission_classes
-
-from string import Template
+from bson.errors import InvalidId
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -33,7 +32,7 @@ class TaskListCreateView(APIView):
             task_data = serializer.validated_data
             task_data['created_at'] = datetime.utcnow()
             task_data['updated_at'] = datetime.utcnow()
-            
+
             created_task = Task.collection.insert_one(task_data)
             task_data['_id'] = str(created_task.inserted_id)
             return Response(task_data, status=status.HTTP_201_CREATED)
@@ -44,7 +43,7 @@ class TaskListCreateView(APIView):
         task_list = [convert_object_id_to_string(task) for task in tasks]
         return Response(task_list, status=status.HTTP_200_OK)
 
-#         استرجاع مهمة معينة باستخدام معرف المهمة.
+#استرجاع مهمة معينة باستخدام معرف المهمة.
 class TaskDetailView(APIView):
     def get(self, request, task_id):
         try:
@@ -99,7 +98,6 @@ class GetAllTasksView(APIView):
           #عرض القوالب وإضافتها
 class TemplateView(APIView):
     permission_classes = [AllowAny]
-
     def get(self, request):
         templates = TemplateModel.get_all_templates()
         serializer = TemplateSerializer(templates, many=True)
@@ -115,7 +113,7 @@ class TemplateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DeleteTemplateByNameView(APIView):
-    @csrf_exempt  # تعطيل التحقق من CSRF لهذا الـ view
+    @csrf_exempt  # تعطيل التحقق من CSRF لهذا المستخدم
     def delete(self, request, template_name):
         try:
             result = TemplateModel.collection.delete_one({"name": template_name})
@@ -127,7 +125,7 @@ class DeleteTemplateByNameView(APIView):
             return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
 
 class DeleteTemplateByIdView(APIView):
-    @csrf_exempt  # تعطيل التحقق من CSRF لهذا الـ view
+    @csrf_exempt  # تعطيل التحقق من CSRF لهذا المستخدم
     def delete(self, request, template_id):
         try:
             if not ObjectId.is_valid(template_id):
@@ -139,30 +137,12 @@ class DeleteTemplateByIdView(APIView):
                 return JsonResponse({"error": f"No template found with ID '{template_id}'."}, status=404)
         except Exception as e:
             return JsonResponse({"error": f"An unexpected error occurred: {str(e)}"}, status=500)
-        
-class AssignTemplateTasksView(APIView):
-    permission_classes = [AllowAny]
-    # View for assigning tasks from template_task to tasks for a specific user.
-    def post(self, request, template_id):
-        try:
-            # استخراج معرف المستخدم من البيانات
-            user_id = request.data.get("user_id")
-            if not user_id:
-                return Response({"error": "User ID is required"}, status=status.HTTP_400_BAD_REQUEST)
-            # استدعاء الدالة لنقل المهام
-            result = TemplateTask.assign_tasks_to_user(template_id, user_id)
-
-            return Response({"message": "Tasks assigned successfully", "details": result}, status=status.HTTP_201_CREATED)
-        except ValueError as ve:
-            return Response({"error": str(ve)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({"error": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class AddTemplateTaskView(APIView):
     permission_classes = [AllowAny]
 #      permission_classes = [IsAdminUser] يجب تبديله الى ان تكون ادمن فقط من يستطيع الوصول
 
-    # View لإضافة مهام جديدة إلى جدول template_task
+    #  لإضافة مهام جديدة إلى جدول template_task
     def post(self, request):
         #(الاصلي موجود تحته للتجريب فقطططططط)
         user = request.user
@@ -189,10 +169,9 @@ class AddTemplateTaskView(APIView):
                 # تمرير البيانات للتحقق
                 task_data = serializer.validated_data
                 result = TemplateTask.add_task_to_template(task_data)
-
                 # تحويل الحقول التي تحتوي على ObjectId إلى نصوص قبل الإرجاع
-                result['_id'] = str(result['_id'])  # تحويل _id إلى نص
-                result['TemplateID'] = str(result['TemplateID'])  # تحويل TemplateID إلى نص
+                result['_id'] = str(result['_id'])
+                result['TemplateID'] = str(result['TemplateID'])
 
                 return Response(
                     {"message": "Task added to template successfully", "task": result},
@@ -202,7 +181,6 @@ class AddTemplateTaskView(APIView):
                 return Response({"error": str(ve)}, status=status.HTTP_400_BAD_REQUEST)
             except Exception as e:
                 return Response({"error": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
         # في حالة كانت البيانات غير صحيحة
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -229,7 +207,7 @@ class DeleteTemplateTaskView(APIView):
             return Response({"error": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UpdateTemplateTaskView(APIView):
-    permission_classes = [AllowAny]  # يمكن تخصيص الصلاحيات لاحقًا
+    permission_classes = [AllowAny]
 
     def put(self, request):
         # التحقق من الحقول المطلوبة
@@ -259,59 +237,23 @@ class UpdateTemplateTaskView(APIView):
             return Response({"message": "Task updated successfully.", "task": updated_task}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-
-
-# هذا الكود يقوم بالتحقق من ان المستخدم قد سجل دخول(الاصلييييييييي)
-# class TransferTemplateTasksView(APIView):
-#     permission_classes = [AllowAny]
-#     # API View لنسخ المهام من جدول Template_Task إلى جدول Task بناءً على TemplateID
-#     def post(self, request):
-#         user = request.user
-
-#         if not user.is_authenticated:
-#             return Response({"error": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
-
-#         template_id = request.data.get('TemplateID')
-#         if not template_id:
-#             return Response({"error": "TemplateID is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-#         try:
-#             result = Task.transfer_template_tasks_to_user(template_id, str(user.id))
-
-#             return Response({
-#                 "message": result["message"],
-#                 "task_ids": result.get("task_ids", []),
-#                 "transferred_task_count": result["transferred_task_count"]
-#             }, status=status.HTTP_201_CREATED)
-
-#         except Exception as e:
-#             return Response({"error": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-
-#كود نفس السابق ولكن للتجريب بدون تسجيل دخول
-class TransferTemplateTasksView(APIView):
-    permission_classes = [AllowAny]  # السماح للجميع بالوصول إلى هذا الـ API
-
-    def post(self, request):
-        # جلب TemplateID من البيانات المرسلة في الطلب
-        template_id = request.data.get('TemplateID')
-        if not template_id:
-            return Response({"error": "TemplateID is required"}, status=status.HTTP_400_BAD_REQUEST)
-        # تعيين user_id وهمي
-        user_id = "12345"  # user_id وهمي
-
+class AssignTemplateTasksView(APIView):
+    #لنقل المهام من قالب إلى جدول المهام للمستخدم المحدد.
+    permission_classes = [AllowAny]
+    def post(self, request, template_id):
         try:
-            # تمرير template_id و user_id الوهمي إلى الوظيفة
-            result = Task.transfer_template_tasks_to_user(template_id, user_id)
-
-            return Response({
-                "message": result["message"],
-                "task_ids": result.get("task_ids", []),
-                "transferred_task_count": result["transferred_task_count"]
-            }, status=status.HTTP_201_CREATED)
-
+            # الحصول على user_id من الطلب
+            user_id = request.data.get("user_id")
+            if not user_id:
+                return Response({"error": "User ID is required"}, status=400)
+            try:
+                ObjectId(template_id)
+            except InvalidId:
+                return Response({"error": "Invalid template ID format"}, status=400)
+            # استدعاء الوظيفة لنقل المهام
+            result = TemplateTask.transfer_template_tasks_to_user(template_id, user_id)
+            return Response(result, status=201)
+        except ValueError as ve:
+            return Response({"error": str(ve)}, status=400)
         except Exception as e:
-            return Response({"error": f"Unexpected error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": f"Unexpected error: {str(e)}"}, status=500)

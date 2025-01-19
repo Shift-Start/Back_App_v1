@@ -33,7 +33,8 @@ class TemplateTaskSerializer(serializers.Serializer):
 
 class AddTemplateTaskSerializer(serializers.Serializer):
     TemplateID = serializers.CharField(max_length=24, required=True)  # ObjectId بطول 24 حرفًا
-    TaskID = serializers.CharField(max_length=255, required=True)
+    # TaskID = serializers.CharField(max_length=255, required=True)
+    TaskName=serializers.CharField(max_length=1000, required=False)
     Description = serializers.CharField(max_length=1000, required=False, allow_blank=True)
     StartDate = serializers.DateTimeField(required=True)
     EndDate = serializers.DateTimeField(required=True)

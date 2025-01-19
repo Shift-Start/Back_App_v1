@@ -9,11 +9,12 @@ from task.views import (
     TemplateView,
     DeleteTemplateByNameView,
     DeleteTemplateByIdView,
-    AssignTemplateTasksView,
+    # AssignTemplateTasksView,
     AddTemplateTaskView,
-    TransferTemplateTasksView,
+    # TransferTemplateTasksView,
     DeleteTemplateTaskView,
-    UpdateTemplateTaskView
+    UpdateTemplateTaskView,
+    AssignTemplateTasksView
 )
 
 urlpatterns = [
@@ -39,12 +40,11 @@ urlpatterns = [
     path('template-tasks/add/', AddTemplateTaskView.as_view(), name='add-template-task'),
     #حذف تاسك حاص بالقالب عن طريق id القالب , id المهمة
     path('template-tasks/delete/', DeleteTemplateTaskView.as_view(), name='delete_template_task'),
-    
+    #التعديل على مهمة القالب
     path('template-tasks/update/', UpdateTemplateTaskView.as_view(), name='update_template_task'),
-    #
-    path('assign-template-tasks/<str:template_id>/', AssignTemplateTasksView.as_view(), name='assign_template_tasks'),
+    #نقل التاسكات من جدول تاسكات القوالب الى جدول التاسكات الكلي
+    path('assign-template-tasks/<str:template_id>/', AssignTemplateTasksView.as_view(), name='assign-template-tasks'),
 
-    path('template-tasks/transfer/', TransferTemplateTasksView.as_view(), name='transfer_template_tasks'),
 ]
 
 #  إضافة مهمة جديدة           http://127.0.0.1:8000/api/tasks/tasks/
@@ -102,4 +102,10 @@ urlpatterns = [
 #         "EndDate": "2025-01-18T11:00:00.000+00:00",
 #         "Point": 15.0
 #     }
+# }
+
+
+#http://127.0.0.1:8000/api/tasks/assign-template-tasks/67880a49670aa7facb59617a/ نقل التاسكات التي اختارها المستخدم من جدول تاسكات القوالب الى جدول التاسكات الكلي مع اعطاءه id المستخدم
+#{
+#     "user_id": "676313e71c6fa6b40d339c6a"
 # }
